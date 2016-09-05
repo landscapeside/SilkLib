@@ -1,0 +1,10 @@
+apply plugin: 'java'
+apply plugin: 'com.github.dcendents.android-maven'
+
+group='com.github.landscape'
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
+
+targetCompatibility = '1.7'
+sourceCompatibility = '1.7'
