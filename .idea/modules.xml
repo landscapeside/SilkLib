@@ -5,7 +5,6 @@
       <module fileurl="file://$PROJECT_DIR$/SilkLib.iml" filepath="$PROJECT_DIR$/SilkLib.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/silk/silk.iml" filepath="$PROJECT_DIR$/silk/silk.iml" />
-      <module fileurl="file://$PROJECT_DIR$/silkannotation/silkannotation.iml" filepath="$PROJECT_DIR$/silkannotation/silkannotation.iml" />
     </modules>
   </component>
 </project>

@@ -1,1 +1,1 @@
-include ':app', ':silkannotation', ':silk'
+include ':app', ':silk'
