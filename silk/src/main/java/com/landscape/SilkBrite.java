@@ -121,7 +121,7 @@ public class SilkBrite<T> {
         });
     }
 
-    public <N> Observable<N> asNodeObservable(String nodeName) {
+    public <N> Observable<N> asNodeObservable(final String nodeName) {
         final String[] nodes = nodeName.split("::");
         Observable<N> nodeObservable = triggers
                 .startWith(silkBeanDriver.getSilkBean())
