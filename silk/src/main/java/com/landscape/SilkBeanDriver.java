@@ -1,9 +1,10 @@
 package com.landscape;
 
+import android.text.TextUtils;
+
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import rx.subjects.PublishSubject;
@@ -26,17 +27,7 @@ public class SilkBeanDriver<T> {
         hasChanged = false;
         iteratorCopy(srcBean,silkBean);
         if (hasChanged) {
-            Method sendMethod = null;
-            try {
-                sendMethod = silkBean.getClass().getMethod("sendTrigger",new Class[]{srcBean.getClass()});
-                sendMethod.invoke(silkBean, silkBean);
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
+            ((BeanSupcriber) silkBean).sendModeNotify(silkBean);
         }
         return this;
     }
@@ -60,6 +51,9 @@ public class SilkBeanDriver<T> {
                     if (fieldObj.hashCode() != destVal.hashCode() && !fieldObj.equals(destVal)) {
                         hasChanged = true;
                         field.set(destObj,fieldObj);
+                        if (destObj.getClass().getName().contains("$$Subcriber")) {
+                            ((BeanSupcriber)destObj).notifyNode(field.getName(),fieldObj);
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -73,6 +67,19 @@ public class SilkBeanDriver<T> {
         List<BeanSupcriber> subSilkBeans = iteratorBean(silkBean);
         for (BeanSupcriber beanSupcriber : subSilkBeans) {
             beanSupcriber.setSilkTrigger(triggers);
+        }
+    }
+
+    public void setNodeTrigger(String tag,PublishSubject triggers) {
+        ((BeanSupcriber) silkBean).setNodeTrigger(triggers);
+        List<BeanSupcriber> subSilkBeans = iteratorBean(silkBean);
+        for (BeanSupcriber beanSupcriber : subSilkBeans) {
+            beanSupcriber.setNodeTrigger(triggers);
+        }
+        if (!TextUtils.isEmpty(tag)) {
+            String[] nodes = tag.split("::");
+            List<String> nodeList = new ArrayList<>(Arrays.asList(nodes));
+            iteratorSetTag("",nodeList,silkBean);
         }
     }
 
@@ -101,7 +108,7 @@ public class SilkBeanDriver<T> {
                     if (fieldObj.getClass().getName().contains("$$Subcriber")) {
                         subSilkBeans.add((BeanSupcriber) fieldObj);
                     }
-                    if (!field.getName().equals("silkTrigger")) {
+                    if (!field.getName().equals("silkTrigger") || !field.getName().equals("nodeTrigger")) {
                         subSilkBeans.addAll(iteratorBean(field.get(srcObj)));
                     }
                 }
@@ -110,6 +117,41 @@ public class SilkBeanDriver<T> {
             }
         }
         return subSilkBeans;
+    }
+
+    private void iteratorSetTag(String preTag,List<String> nodes,Object object) {
+        if (nodes.size() == 0) {
+            return;
+        }
+        Field[] fields;
+        if (object.getClass().getName().contains("$$Subcriber")) {
+            fields = object.getClass().getSuperclass().getDeclaredFields();
+        } else {
+            fields = object.getClass().getDeclaredFields();
+        }
+        for (Field field : fields) {
+            if (field.getName().equals(nodes.get(0))) {
+                if (object.getClass().getName().contains("$$Subcriber")) {
+                    ((BeanSupcriber)object).setPreTag(preTag);
+                }
+                if (nodes.size() > 1) {
+                    if (TextUtils.isEmpty(preTag)) {
+                        preTag = nodes.get(0);
+                    } else {
+                        preTag = preTag + "::" + nodes.get(0);
+                    }
+                    nodes.remove(0);
+                    try {
+                        field.setAccessible(true);
+                        iteratorSetTag(preTag, nodes, field.get(object));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    return;
+                }
+            }
+        }
     }
 
     public T getSilkBean() {
